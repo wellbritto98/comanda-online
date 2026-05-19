@@ -1,6 +1,6 @@
 # Comanda Phase 1 & 2 Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Implement database schema, aesthetic layout (Warm & Organic), public menu interface, and basic dashboard structure.
 
@@ -15,14 +15,14 @@
 **Files:**
 - Modify: `package.json`
 
-- [ ] **Step 1: Install core backend & auth dependencies**
+- [x] **Step 1: Install core backend & auth dependencies**
 
 ```bash
 npm install drizzle-orm postgres jsonwebtoken bcryptjs zod zustand lucide-react
 npm install -D drizzle-kit @types/jsonwebtoken @types/bcryptjs @types/pg
 ```
 
-- [ ] **Step 2: Commit installation**
+- [x] **Step 2: Commit installation**
 
 ```bash
 git add package.json package-lock.json
@@ -35,7 +35,7 @@ git commit -m "chore: install database, auth, and state dependencies"
 - Create: `src/drizzle/schema.ts`
 - Create: `src/lib/db.ts`
 
-- [ ] **Step 1: Write Drizzle Schema**
+- [x] **Step 1: Write Drizzle Schema**
 
 Create `src/drizzle/schema.ts`:
 ```typescript
@@ -68,7 +68,7 @@ export const menuItems = pgTable("menu_items", {
 });
 ```
 
-- [ ] **Step 2: Write Database Connection**
+- [x] **Step 2: Write Database Connection**
 
 Create `src/lib/db.ts`:
 ```typescript
@@ -81,7 +81,7 @@ const client = postgres(connectionString);
 export const db = drizzle(client, { schema });
 ```
 
-- [ ] **Step 3: Commit schema**
+- [x] **Step 3: Commit schema**
 
 ```bash
 git add src/drizzle/schema.ts src/lib/db.ts
@@ -94,7 +94,7 @@ git commit -m "feat: setup database schema and connection"
 - Modify: `src/app/layout.tsx`
 - Modify: `src/app/globals.css` (assuming standard setup)
 
-- [ ] **Step 1: Configure Fonts in Layout**
+- [x] **Step 1: Configure Fonts in Layout**
 
 Modify `src/app/layout.tsx`:
 ```tsx
@@ -132,7 +132,7 @@ export default function RootLayout({
 }
 ```
 
-- [ ] **Step 2: Add Tailwind Base & Variables**
+- [x] **Step 2: Add Tailwind Base & Variables**
 
 Modify `src/app/globals.css`:
 ```css
@@ -148,7 +148,7 @@ Modify `src/app/globals.css`:
 }
 ```
 
-- [ ] **Step 3: Commit aesthetic configuration**
+- [x] **Step 3: Commit aesthetic configuration**
 
 ```bash
 git add src/app/layout.tsx src/app/globals.css
@@ -161,7 +161,7 @@ git commit -m "style: apply warm and organic typography and colors"
 - Create: `src/app/page.tsx`
 - Create: `src/components/public/MenuItemCard.tsx`
 
-- [ ] **Step 1: Create the Menu Item Component**
+- [x] **Step 1: Create the Menu Item Component**
 
 Create `src/components/public/MenuItemCard.tsx`:
 ```tsx
@@ -202,7 +202,7 @@ export function MenuItemCard({ name, description, price, imageUrl }: MenuItemPro
 }
 ```
 
-- [ ] **Step 2: Build the Public Menu Feed**
+- [x] **Step 2: Build the Public Menu Feed**
 
 Modify `src/app/page.tsx`:
 ```tsx
@@ -242,7 +242,7 @@ export default function PublicMenu() {
 }
 ```
 
-- [ ] **Step 3: Commit public menu**
+- [x] **Step 3: Commit public menu**
 
 ```bash
 git add src/app/page.tsx src/components/public/MenuItemCard.tsx
