@@ -61,7 +61,7 @@ services:
     restart: unless-stopped
     ports:
       # Só HTTP — SSL no Nginx Proxy Manager apontando para http://host:HTTP_PORT
-      - "${HTTP_PORT:-8080}:80"
+      - "${HTTP_PORT:-8547}:80"
     volumes:
       - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
