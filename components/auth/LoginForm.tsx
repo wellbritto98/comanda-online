@@ -1,13 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export function LoginForm() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -22,18 +20,19 @@ export function LoginForm() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
         body: JSON.stringify({ email, password }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error ?? "Erro ao entrar");
+        setError(typeof data.error === "string" ? data.error : "Erro ao entrar");
         return;
       }
 
-      router.push("/app/cardapio");
-      router.refresh();
+      // Navegação completa garante que o cookie httpOnly seja enviado ao layout /app
+      window.location.assign("/app/cardapio");
     } catch {
       setError("Erro de conexão. Tente novamente.");
     } finally {

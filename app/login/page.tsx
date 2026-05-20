@@ -1,7 +1,16 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/auth/LoginForm";
+import { getSession } from "@/lib/auth";
 
-export default function LoginPage() {
+export const dynamic = "force-dynamic";
+
+export default async function LoginPage() {
+  const session = await getSession();
+  if (session) {
+    redirect("/app/cardapio");
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center px-4 py-12">
       <div className="mx-auto w-full max-w-md rounded-3xl border border-border bg-card p-8 shadow-[0_8px_40px_rgb(0,0,0,0.06)]">

@@ -1,0 +1,16 @@
+node_modules
+.next
+.git
+.gitignore
+.env*
+!.env.docker.example
+dist
+.vinext
+coverage
+*.md
+.agents
+.cursor
+.worktrees
+terminals
+docs
+**/*.pem
