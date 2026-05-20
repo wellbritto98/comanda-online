@@ -2,7 +2,7 @@
 
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { Clock, GripVertical, Mail, MapPin, Phone } from "lucide-react";
+import { Clock, GripVertical, Mail, MapPin, MessageSquare, Phone } from "lucide-react";
 import { formatBRL } from "@/lib/cart-store";
 import type { KanbanOrder } from "@/lib/orders";
 import { PAYMENT_METHOD_LABELS } from "@/lib/order-status";
@@ -64,8 +64,13 @@ export function KanbanCardContent({
 }: KanbanCardContentProps) {
   const title =
     order.type === "presencial"
-      ? `Comanda ${order.comandaNumber ?? "—"}`
+      ? `Mesa ${order.tableNumber ?? order.comandaNumber ?? "—"}`
       : (order.customerName ?? "Cliente");
+
+  const subtitle =
+    order.type === "presencial" && order.comandaId
+      ? `Comanda #${order.comandaId}`
+      : null;
 
   const paymentLabel = order.paymentMethod
     ? (PAYMENT_METHOD_LABELS[order.paymentMethod] ?? order.paymentMethod)
@@ -94,7 +99,9 @@ export function KanbanCardContent({
           <div className="flex items-start justify-between gap-2">
             <div>
               <p className="font-semibold leading-tight text-stone-900">{title}</p>
-              <p className="text-xs text-stone-500">#{order.id}</p>
+              <p className="text-xs text-stone-500">
+                {subtitle ? `${subtitle} · ` : ""}#{order.id}
+              </p>
             </div>
             <span className="shrink-0 rounded-lg bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-700">
               {formatBRL(order.total)}
@@ -132,6 +139,15 @@ export function KanbanCardContent({
           <div className="mt-2 border-t border-stone-100 pt-2">
             <OrderItemsList items={order.items} />
           </div>
+
+          {order.notes?.trim() && (
+            <p className="mt-2 flex items-start gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2 py-1.5 text-xs text-amber-950">
+              <MessageSquare className="mt-0.5 h-3 w-3 shrink-0" aria-hidden />
+              <span>
+                <span className="font-semibold">Obs:</span> {order.notes.trim()}
+              </span>
+            </p>
+          )}
 
           {order.type === "delivery" && order.customerAddress && (
             <p className="mt-2 flex items-start gap-1 line-clamp-2 text-xs text-stone-500">

@@ -68,11 +68,15 @@ export const createDeliveryOrderSchema = z.object({
 export const createPresencialOrderSchema = z.object({
   type: z.literal("presencial"),
   restaurantId: z.number().int().positive(),
-  comandaNumber: z.string().min(1, "Número da comanda é obrigatório"),
+  tableNumber: z.string().min(1, "Número da mesa é obrigatório"),
   customerPhone: optionalPhoneSchema,
   customerEmail: optionalEmailSchema,
   notes: z.string().optional(),
   items: z.array(orderItemInputSchema).min(1, "Adicione itens ao carrinho"),
+});
+
+export const closeComandaSchema = z.object({
+  paymentMethod: z.enum(["dinheiro", "cartao", "pix"]),
 });
 
 export const trackOrderSchema = z.object({
@@ -99,6 +103,8 @@ export const webhookEventValues = [
   "order.created",
   "order.status_changed",
   "order.delivered",
+  "comanda.opened",
+  "comanda.closed",
   "menu.item_updated",
 ] as const;
 
@@ -133,6 +139,7 @@ export type CategoryInput = z.infer<typeof categorySchema>;
 export type MenuItemInput = z.infer<typeof menuItemSchema>;
 export type CreateDeliveryOrderInput = z.infer<typeof createDeliveryOrderSchema>;
 export type CreatePresencialOrderInput = z.infer<typeof createPresencialOrderSchema>;
+export type CloseComandaInput = z.infer<typeof closeComandaSchema>;
 export type TrackOrderInput = z.infer<typeof trackOrderSchema>;
 export type UpdateOrderStatusInput = z.infer<typeof updateOrderStatusSchema>;
 export type WebhookSubscriptionInput = z.infer<typeof webhookSubscriptionSchema>;

@@ -17,5 +17,12 @@ export type OrderStatusKey = (typeof ORDER_STATUS_STEPS)[number]["key"];
 export const PAYMENT_METHOD_LABELS: Record<string, string> = {
   dinheiro: "Dinheiro",
   cartao_entrega: "Cartão na entrega",
+  cartao: "Cartão",
   pix: "Pix",
 };
+
+export const PRESENCIAL_PAYMENT_METHODS = [
+  { value: "dinheiro", label: "Dinheiro" },
+  { value: "cartao", label: "Cartão" },
+  { value: "pix", label: "Pix" },
+] as const;

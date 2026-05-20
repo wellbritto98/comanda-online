@@ -7,8 +7,10 @@ import {
   serial,
   text,
   timestamp,
+  uniqueIndex,
   varchar,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 export const orderTypeEnum = pgEnum("order_type", ["delivery", "presencial"]);
 export const orderStatusEnum = pgEnum("order_status", [
@@ -17,9 +19,11 @@ export const orderStatusEnum = pgEnum("order_status", [
   "pronto",
   "entregue",
 ]);
+export const comandaStatusEnum = pgEnum("comanda_status", ["open", "closed"]);
 export const paymentMethodEnum = pgEnum("payment_method", [
   "dinheiro",
   "cartao_entrega",
+  "cartao",
   "pix",
 ]);
 
@@ -119,6 +123,28 @@ export const itemCategories = pgTable(
   (table) => [primaryKey({ columns: [table.itemId, table.categoryId] })],
 );
 
+export const comandas = pgTable(
+  "comandas",
+  {
+    id: serial("id").primaryKey(),
+    restaurantId: integer("restaurant_id")
+      .references(() => restaurants.id)
+      .notNull(),
+    tableNumber: varchar("table_number", { length: 50 }).notNull(),
+    status: comandaStatusEnum("status").default("open").notNull(),
+    paymentMethod: paymentMethodEnum("payment_method"),
+    total: integer("total").default(0).notNull(),
+    openedAt: timestamp("opened_at").defaultNow().notNull(),
+    closedAt: timestamp("closed_at"),
+    closedBy: integer("closed_by").references(() => users.id),
+  },
+  (table) => [
+    uniqueIndex("comandas_restaurant_table_open_idx")
+      .on(table.restaurantId, table.tableNumber)
+      .where(sql`${table.status} = 'open'`),
+  ],
+);
+
 export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
   restaurantId: integer("restaurant_id")
@@ -134,6 +160,7 @@ export const orders = pgTable("orders", {
   paymentMethod: paymentMethodEnum("payment_method"),
   deliveryFee: integer("delivery_fee").default(0).notNull(),
   estimatedMinutes: integer("estimated_minutes"),
+  comandaId: integer("comanda_id").references(() => comandas.id),
   comandaNumber: varchar("comanda_number", { length: 50 }),
   total: integer("total").notNull(),
   notes: text("notes"),

@@ -111,7 +111,7 @@ body {
   mix-blend-mode: multiply;
 }
 
-.grain-surface > * {
+.grain-surface > main {
   position: relative;
   z-index: 1;
 }

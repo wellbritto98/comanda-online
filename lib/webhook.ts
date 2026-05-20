@@ -7,6 +7,8 @@ export type WebhookEvent =
   | "order.created"
   | "order.status_changed"
   | "order.delivered"
+  | "comanda.opened"
+  | "comanda.closed"
   | "menu.item_updated";
 
 function sign(body: string, secret: string) {

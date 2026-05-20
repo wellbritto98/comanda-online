@@ -32,6 +32,13 @@ interface Category {
   items: MenuItem[];
 }
 
+interface OpenSession {
+  id: number;
+  tableNumber: string;
+  partialTotal: number;
+  roundCount: number;
+}
+
 interface PresencialMenuViewProps {
   restaurant: {
     id: number;
@@ -47,34 +54,72 @@ export function PresencialMenuView({
   categories,
 }: PresencialMenuViewProps) {
   const addItem = useCartStore((s) => s.addItem);
+  const items = useCartStore((s) => s.items);
   const itemCount = useCartStore((s) => s.itemCount);
   const totalCents = useCartStore((s) => s.totalCents);
 
-  const [comandaNumber, setComandaNumber] = useState("");
-  const [comandaConfirmed, setComandaConfirmed] = useState(false);
-  const [successOrderId, setSuccessOrderId] = useState<number | null>(null);
+  const [tableNumber, setTableNumber] = useState("");
+  const [tableConfirmed, setTableConfirmed] = useState(false);
+  const [openSession, setOpenSession] = useState<OpenSession | null>(null);
+  const [success, setSuccess] = useState<{
+    orderId: number;
+    comandaId: number;
+  } | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  if (successOrderId) {
+  async function confirmTable() {
+    const trimmed = tableNumber.trim();
+    if (!trimmed) return;
+
+    try {
+      const res = await fetch(
+        `/api/comandas/public?tableNumber=${encodeURIComponent(trimmed)}&restaurantId=${restaurant.id}`,
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setOpenSession(data.session ?? null);
+      }
+    } catch {
+      /* ignore — mesa sem sessão ainda */
+    }
+    setTableConfirmed(true);
+  }
+
+  async function refreshSession() {
+    if (!tableNumber.trim()) return;
+    try {
+      const res = await fetch(
+        `/api/comandas/public?tableNumber=${encodeURIComponent(tableNumber.trim())}&restaurantId=${restaurant.id}`,
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setOpenSession(data.session ?? null);
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  if (success) {
     return (
       <main className="mx-auto max-w-lg px-4 py-16 text-center">
         <h1 className="font-serif text-3xl font-bold text-stone-900">
           Pedido enviado!
         </h1>
         <p className="mt-4 text-stone-600">
-          Seu pedido <span className="font-semibold">#{successOrderId}</span> foi
-          registrado na comanda{" "}
-          <span className="font-semibold">{comandaNumber}</span>.
+          Pedido <span className="font-semibold">#{success.orderId}</span> registrado
+          na{" "}
+          <span className="font-semibold">Mesa {tableNumber}</span> · Comanda{" "}
+          <span className="font-semibold">#{success.comandaId}</span>.
         </p>
         <Button
           className="mt-8"
           onClick={() => {
-            setSuccessOrderId(null);
-            setComandaConfirmed(false);
-            setComandaNumber("");
+            setSuccess(null);
+            void refreshSession();
           }}
         >
-          Fazer novo pedido
+          Continuar pedindo
         </Button>
       </main>
     );
@@ -88,28 +133,28 @@ export function PresencialMenuView({
         logoUrl={restaurant.logoUrl}
       />
 
-      {!comandaConfirmed ? (
+      {!tableConfirmed ? (
         <section className="mx-auto max-w-md px-4 py-8">
           <h2 className="font-serif text-2xl font-bold text-stone-900">
-            Número da comanda
+            Número da mesa
           </h2>
           <p className="mt-2 text-sm text-stone-500">
-            Informe o número da comanda na sua mesa para continuar.
+            Informe o número da sua mesa para continuar.
           </p>
           <div className="mt-6 space-y-2">
-            <Label htmlFor="comanda">Comanda</Label>
+            <Label htmlFor="mesa">Mesa</Label>
             <Input
-              id="comanda"
-              value={comandaNumber}
-              onChange={(e) => setComandaNumber(e.target.value)}
-              placeholder="Ex.: 12"
+              id="mesa"
+              value={tableNumber}
+              onChange={(e) => setTableNumber(e.target.value)}
+              placeholder="Ex.: 5"
               required
             />
           </div>
           <Button
             className="mt-4 w-full"
-            disabled={!comandaNumber.trim()}
-            onClick={() => setComandaConfirmed(true)}
+            disabled={!tableNumber.trim()}
+            onClick={() => void confirmTable()}
           >
             Continuar
           </Button>
@@ -117,11 +162,35 @@ export function PresencialMenuView({
       ) : (
         <>
           <div className="sticky top-14 z-20 border-b border-stone-200 bg-[#FAFAF8] px-4 py-2 text-center text-sm text-stone-600">
-            Comanda <span className="font-semibold text-stone-900">{comandaNumber}</span>
+            Mesa <span className="font-semibold text-stone-900">{tableNumber}</span>
+            {openSession && (
+              <>
+                {" "}
+                · Comanda{" "}
+                <span className="font-semibold text-stone-900">#{openSession.id}</span>
+                {" "}
+                · Conta em aberto{" "}
+                <span className="font-semibold text-primary">
+                  {formatBRL(openSession.partialTotal)}
+                </span>
+              </>
+            )}
             <button
               type="button"
               className="ml-2 text-primary underline"
-              onClick={() => setComandaConfirmed(false)}
+              onClick={() => {
+                if (
+                  openSession &&
+                  openSession.roundCount > 0 &&
+                  !window.confirm(
+                    "Trocar de mesa? Seus próximos pedidos irão para outra mesa.",
+                  )
+                ) {
+                  return;
+                }
+                setTableConfirmed(false);
+                setOpenSession(null);
+              }}
             >
               alterar
             </button>
@@ -150,12 +219,12 @@ export function PresencialMenuView({
             <p className="text-center text-stone-500">Nenhum item no cardápio.</p>
           )}
 
-          <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-stone-200 bg-[#FAFAF8] px-4 py-3">
+          <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-stone-200 bg-[#FAFAF8] px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
               <Button
                 type="button"
                 className="w-full gap-2"
-                disabled={itemCount() === 0}
+                disabled={items.length === 0}
                 onClick={() => setSheetOpen(true)}
               >
                 <ShoppingBag className="h-4 w-4" />
@@ -163,15 +232,15 @@ export function PresencialMenuView({
               </Button>
               <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto">
                 <SheetHeader>
-                  <SheetTitle>Finalizar pedido</SheetTitle>
+                  <SheetTitle>Enviar para a cozinha</SheetTitle>
                 </SheetHeader>
                 <div className="mt-4">
                   <PresencialOrderForm
                     restaurantId={restaurant.id}
-                    comandaNumber={comandaNumber}
-                    onSuccess={(id) => {
+                    tableNumber={tableNumber}
+                    onSuccess={(orderId, comandaId) => {
                       setSheetOpen(false);
-                      setSuccessOrderId(id);
+                      setSuccess({ orderId, comandaId });
                     }}
                   />
                 </div>

@@ -12,7 +12,9 @@ import {
 } from "@dnd-kit/core";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { KanbanCard, KanbanCardOverlay } from "@/components/dashboard/KanbanCard";
+import { DayFilter } from "@/components/dashboard/DayFilter";
 import type { KanbanOrder } from "@/lib/orders";
+import { todayDateString } from "@/lib/day-filter";
 import {
   ORDER_STATUS_STEPS,
   type OrderStatusKey,
@@ -88,10 +90,12 @@ function KanbanColumn({
 
 interface KanbanBoardProps {
   initialOrders: KanbanOrder[];
+  initialDate?: string;
 }
 
-export function KanbanBoard({ initialOrders }: KanbanBoardProps) {
+export function KanbanBoard({ initialOrders, initialDate }: KanbanBoardProps) {
   const [orders, setOrders] = useState(initialOrders);
+  const [selectedDate, setSelectedDate] = useState(initialDate ?? todayDateString());
   const [activeId, setActiveId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -105,9 +109,11 @@ export function KanbanBoard({ initialOrders }: KanbanBoardProps) {
     ? orders.find((o) => o.id === activeId) ?? null
     : null;
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (date = selectedDate) => {
     try {
-      const res = await fetch("/api/orders/dashboard");
+      const res = await fetch(
+        `/api/orders/dashboard?date=${encodeURIComponent(date)}`,
+      );
       if (!res.ok) return;
       const data = (await res.json()) as { orders: KanbanOrder[] };
       setOrders(
@@ -119,7 +125,12 @@ export function KanbanBoard({ initialOrders }: KanbanBoardProps) {
     } catch {
       /* polling silencioso */
     }
-  }, []);
+  }, [selectedDate]);
+
+  function handleDateChange(date: string) {
+    setSelectedDate(date);
+    void refresh(date);
+  }
 
   useRestaurantOrdersStream({
     onStatusChanged: ({ orderId, status }) => {
@@ -206,14 +217,15 @@ export function KanbanBoard({ initialOrders }: KanbanBoardProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm text-stone-500">
-          Arraste os cards entre as colunas para atualizar o status.
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <DayFilter value={selectedDate} onChange={handleDateChange} />
         {isUpdating && (
           <span className="text-xs text-primary">Salvando…</span>
         )}
       </div>
+      <p className="text-sm text-stone-500">
+        Arraste os cards entre as colunas para atualizar o status.
+      </p>
 
       {error && (
         <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">

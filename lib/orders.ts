@@ -1,7 +1,9 @@
 import { randomUUID } from "crypto";
-import { and, desc, eq, gte, inArray, ne, or } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, lt } from "drizzle-orm";
 import { menuItems, orderItems, orders } from "@/drizzle/schema";
 import { db } from "@/lib/db";
+import { findOrOpenComanda } from "@/lib/comandas";
+import { getDayBounds, parseDateFilter } from "@/lib/day-filter";
 import { getDeliverySettings } from "@/lib/settings";
 import { sseManager } from "@/lib/sse-manager";
 import {
@@ -72,9 +74,12 @@ export type KanbanOrder = {
   customerName: string | null;
   customerPhone: string | null;
   customerEmail: string | null;
+  comandaId: number | null;
   comandaNumber: string | null;
+  tableNumber: string | null;
   paymentMethod: string | null;
   customerAddress: string | null;
+  notes: string | null;
   total: number;
   itemCount: number;
   items: OrderLine[];
@@ -236,6 +241,10 @@ export async function createPresencialOrder(input: CreatePresencialOrderInput) {
   const resolved = await resolveLineItems(input.restaurantId, input.items);
   if ("error" in resolved) return resolved;
 
+  const session = await findOrOpenComanda(input.restaurantId, input.tableNumber);
+  if ("error" in session) return session;
+
+  const { comanda } = session;
   const { lineItems } = resolved;
   const total = lineItems.reduce((sum, l) => sum + l.subtotal, 0);
   const accessToken = randomUUID();
@@ -246,7 +255,8 @@ export async function createPresencialOrder(input: CreatePresencialOrderInput) {
       restaurantId: input.restaurantId,
       type: "presencial",
       status: "em_analise",
-      comandaNumber: input.comandaNumber,
+      comandaId: comanda.id,
+      comandaNumber: comanda.tableNumber,
       customerPhone: input.customerPhone ?? null,
       customerEmail: input.customerEmail ?? null,
       deliveryFee: 0,
@@ -279,7 +289,8 @@ export async function createPresencialOrder(input: CreatePresencialOrderInput) {
       status: order.status,
       total: order.total,
       accessToken: order.accessToken,
-      comandaNumber: order.comandaNumber,
+      comandaId: comanda.id,
+      tableNumber: comanda.tableNumber,
       createdAt: order.createdAt,
     },
     items: lineItems,
@@ -299,8 +310,11 @@ export async function getOrderById(orderId: number, accessToken: string) {
   return toPublicOrder(order, lines);
 }
 
-export async function listKanbanOrders(restaurantId: number): Promise<KanbanOrder[]> {
-  const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+export async function listKanbanOrders(
+  restaurantId: number,
+  date?: string,
+): Promise<KanbanOrder[]> {
+  const { start, end } = getDayBounds(parseDateFilter(date));
 
   const orderRows = await db
     .select({
@@ -310,9 +324,11 @@ export async function listKanbanOrders(restaurantId: number): Promise<KanbanOrde
       customerName: orders.customerName,
       customerPhone: orders.customerPhone,
       customerEmail: orders.customerEmail,
+      comandaId: orders.comandaId,
       comandaNumber: orders.comandaNumber,
       paymentMethod: orders.paymentMethod,
       customerAddress: orders.customerAddress,
+      notes: orders.notes,
       total: orders.total,
       createdAt: orders.createdAt,
     })
@@ -320,7 +336,8 @@ export async function listKanbanOrders(restaurantId: number): Promise<KanbanOrde
     .where(
       and(
         eq(orders.restaurantId, restaurantId),
-        or(ne(orders.status, "entregue"), gte(orders.createdAt, since)),
+        gte(orders.createdAt, start),
+        lt(orders.createdAt, end),
       ),
     )
     .orderBy(desc(orders.createdAt));
@@ -344,6 +361,7 @@ export async function listKanbanOrders(restaurantId: number): Promise<KanbanOrde
     const items = linesByOrderId.get(row.id) ?? [];
     return {
       ...row,
+      tableNumber: row.comandaNumber,
       items,
       itemCount: items.length,
     };

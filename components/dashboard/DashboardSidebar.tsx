@@ -6,6 +6,7 @@ import {
   BarChart3,
   ClipboardList,
   LogOut,
+  Receipt,
   Settings,
   UtensilsCrossed,
   Webhook,
@@ -20,6 +21,7 @@ interface DashboardSidebarProps {
 const NAV = [
   { href: "/app/cardapio", label: "Cardápio", icon: UtensilsCrossed },
   { href: "/app/pedidos", label: "Pedidos", icon: ClipboardList },
+  { href: "/app/comandas", label: "Comandas", icon: Receipt },
   { href: "/app/relatorios", label: "Relatórios", icon: BarChart3 },
   { href: "/app/ajustes", label: "Ajustes", icon: Settings },
   { href: "/app/webhooks", label: "Webhooks", icon: Webhook },

@@ -8,13 +8,13 @@ import { formatBRL, useCartStore } from "@/lib/cart-store";
 
 interface PresencialOrderFormProps {
   restaurantId: number;
-  comandaNumber: string;
-  onSuccess: (orderId: number) => void;
+  tableNumber: string;
+  onSuccess: (orderId: number, comandaId: number) => void;
 }
 
 export function PresencialOrderForm({
   restaurantId,
-  comandaNumber,
+  tableNumber,
   onSuccess,
 }: PresencialOrderFormProps) {
   const items = useCartStore((s) => s.items);
@@ -39,7 +39,7 @@ export function PresencialOrderForm({
         body: JSON.stringify({
           type: "presencial",
           restaurantId,
-          comandaNumber,
+          tableNumber,
           customerPhone: customerPhone || undefined,
           customerEmail: customerEmail || undefined,
           notes: notes || undefined,
@@ -57,7 +57,7 @@ export function PresencialOrderForm({
       }
 
       clear();
-      onSuccess(data.order.id);
+      onSuccess(data.order.id, data.order.comandaId);
     } catch {
       setError("Erro de conexão. Tente novamente.");
     } finally {
@@ -68,7 +68,7 @@ export function PresencialOrderForm({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="rounded-xl bg-stone-50 px-3 py-2 text-sm text-stone-600">
-        Comanda <span className="font-bold text-stone-900">{comandaNumber}</span> ·{" "}
+        Mesa <span className="font-bold text-stone-900">{tableNumber}</span> ·{" "}
         {formatBRL(totalCents())}
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
