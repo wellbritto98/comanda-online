@@ -43,6 +43,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
+      HOST: 0.0.0.0
       DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-comanda}
       JWT_SECRET: ${JWT_SECRET:?Defina JWT_SECRET no .env}
       WEBHOOK_SIGNING_SECRET: ${WEBHOOK_SIGNING_SECRET:?Defina WEBHOOK_SIGNING_SECRET no .env}

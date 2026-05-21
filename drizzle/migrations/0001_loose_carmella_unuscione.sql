@@ -49,6 +49,7 @@ DO $$ BEGIN
   ALTER TABLE "orders" ADD CONSTRAINT "orders_access_token_unique" UNIQUE ("access_token");
 EXCEPTION
   WHEN duplicate_object THEN NULL;
+  WHEN duplicate_table THEN NULL;
 END $$;--> statement-breakpoint
 DO $$ BEGIN
   ALTER TABLE "order_items" ADD CONSTRAINT "order_items_order_id_orders_id_fk" FOREIGN KEY ("order_id") REFERENCES "public"."orders"("id") ON DELETE cascade ON UPDATE no action;

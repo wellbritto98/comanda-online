@@ -15,6 +15,13 @@
       "when": 1779165559545,
       "tag": "0001_loose_carmella_unuscione",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1779200000000,
+      "tag": "0002_comandas_webhooks",
+      "breakpoints": true
     }
   ]
 }
